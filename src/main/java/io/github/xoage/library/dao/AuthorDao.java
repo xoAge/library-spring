@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Objects;
 
 /// один класс отвечает за одну таблицу.
-@Repository
+@Repository //Бин для работы с базой
 public class AuthorDao {
 
     private final JdbcTemplate jdbc;
