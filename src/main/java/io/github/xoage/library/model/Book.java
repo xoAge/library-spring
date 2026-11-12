@@ -39,6 +39,14 @@ public class Book {
         this.isbn = isbn;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
+    }
+
     public Integer id() {
         return id;
     }

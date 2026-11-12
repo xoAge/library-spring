@@ -8,6 +8,7 @@ import io.github.xoage.library.model.Book;
 import io.github.xoage.library.repository.AuthorRepository;
 import io.github.xoage.library.repository.BookRepository;
 import io.github.xoage.library.service.LibraryService;
+import jakarta.transaction.Transactional;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Sort;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 
 @Component //Spring сам создаёт меню и запускает его после старта
@@ -161,7 +163,7 @@ public class ConsoleMenu implements CommandLineRunner {
             return;
         }
 
-        if (bookDao.update(new Book(id, newTitle, null, newYear, null))) {
+        if (service.updateBook(id, newTitle, newYear)) {
             System.out.println("Книга изменена");
         } else {
             System.out.println("Книги с id " + id + " нет");
