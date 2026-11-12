@@ -1,13 +1,14 @@
 package io.github.xoage.library.ui;
 
-import io.github.xoage.library.dao.AuthorDao;
-import io.github.xoage.library.dao.BookDao;
 import io.github.xoage.library.model.Author;
 import io.github.xoage.library.model.AuthorStats;
 import io.github.xoage.library.model.Book;
+import io.github.xoage.library.repository.AuthorRepository;
+import io.github.xoage.library.repository.BookRepository;
 import io.github.xoage.library.service.LibraryService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
@@ -17,15 +18,15 @@ import java.util.Scanner;
 @Component //Spring сам создаёт меню и запускает его после старта
 public class ConsoleMenu implements CommandLineRunner {
 
-    private final BookDao bookDao;
-    private final AuthorDao authorDao;
+    private final BookRepository bookRepository;
+    private final AuthorRepository authorRepository;
     private final LibraryService service;
     private final Scanner scanner = new Scanner(System.in);
 
-    public ConsoleMenu(BookDao bookDao, AuthorDao authorDao, LibraryService service) {
-        this.bookDao = bookDao;
-        this.authorDao = authorDao;
+    public ConsoleMenu(LibraryService service, BookRepository bookRepository, AuthorRepository authorRepository) {
         this.service = service;
+        this.bookRepository = bookRepository;
+        this.authorRepository = authorRepository;
     }
 
     @Override
@@ -46,7 +47,7 @@ public class ConsoleMenu implements CommandLineRunner {
 
             try {//try внутри while, потому что работает от try к catch, если будет снаружи: ошибка ловится снаружи, а catch уже нет.
                 switch (choice) {
-                    case "1" -> printBooks(bookDao.findAll());
+                    case "1" -> printBooks(bookRepository.findAll(Sort.by("id")));
                     case "2" -> search();
                     case "3" -> addBook();
                     case "4" -> deleteBook();
@@ -86,17 +87,17 @@ public class ConsoleMenu implements CommandLineRunner {
         System.out.print("Часть названия: ");
         String part = scanner.nextLine().trim(); //nextInt() читает число, а Enter после него оставляет во вводе.
         // Следующий nextLine() подхватывает этот пустой Enter, поэтому везде nextLine()
-        printBooks(bookDao.findByTitle(part));
+        printBooks(bookRepository.findByTitleContainingIgnoreCaseOrderById(part));
     }
 
     private void searchByAuthor() {
         System.out.print("Часть имени автора: ");
         String part = scanner.nextLine().trim();
-        printBooks(bookDao.findByAuthor(part));
+        printBooks(bookRepository.findByAuthorNameContainingIgnoreCaseOrderById(part));
     }
 
     private void printAuthorStats() {
-        for (AuthorStats stats : authorDao.findAllWithBookCount()) {
+        for (AuthorStats stats : authorRepository.findAllWithBookCount()) {
             System.out.printf("%-25s книг: %d%n", stats.name(), stats.bookCount());
         }
     }
@@ -106,7 +107,7 @@ public class ConsoleMenu implements CommandLineRunner {
         String title = scanner.nextLine().trim();
 
         System.out.println("Авторы:");
-        for (Author author : authorDao.findAll()) {
+        for (Author author : authorRepository.findAll(Sort.by("name"))) {
             System.out.println("  " + author.id() + ". " + author.name());
         }
         System.out.print("Номер автора: ");
@@ -120,19 +121,21 @@ public class ConsoleMenu implements CommandLineRunner {
         String isbnText = scanner.nextLine().trim();
         String isbn = isbnText.isEmpty() ? null : isbnText;
 
-        int id = bookDao.add(new Book(null, title, new Author(authorId, null), year, isbn));
-        System.out.println("Книга добавлена, id = " + id);
+        Book saved = bookRepository.save(
+                new Book(null, title, authorRepository.getReferenceById(authorId), year, isbn));
+        System.out.println("Книга добавлена, id = " + saved.id());
     }
 
     private void deleteBook() {
         System.out.print("id книги для удаления: ");
         int id = Integer.parseInt(scanner.nextLine().trim());
 
-        if (bookDao.delete(id)) {
-            System.out.println("Книга удалена");
-        } else {
+        if (!bookRepository.existsById(id)) {
             System.out.println("Книги с id " + id + " нет");
+            return;
         }
+        bookRepository.deleteById(id);
+        System.out.println("Книга удалена");
     }
 
     private void updateBook() {
@@ -152,7 +155,7 @@ public class ConsoleMenu implements CommandLineRunner {
             return;
         }
 
-        if (bookDao.update(new Book(id, newTitle, null, newYear, null))) {
+        if (service.updateBook(id, newTitle, newYear)) {
             System.out.println("Книга изменена");
         } else {
             System.out.println("Книги с id " + id + " нет");
