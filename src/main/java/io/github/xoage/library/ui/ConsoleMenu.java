@@ -1,14 +1,11 @@
 package io.github.xoage.library.ui;
 
-import io.github.xoage.library.dao.AuthorDao;
-import io.github.xoage.library.dao.BookDao;
 import io.github.xoage.library.model.Author;
 import io.github.xoage.library.model.AuthorStats;
 import io.github.xoage.library.model.Book;
 import io.github.xoage.library.repository.AuthorRepository;
 import io.github.xoage.library.repository.BookRepository;
 import io.github.xoage.library.service.LibraryService;
-import jakarta.transaction.Transactional;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.Sort;
@@ -16,7 +13,6 @@ import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 
 @Component //Spring сам создаёт меню и запускает его после старта
@@ -24,14 +20,10 @@ public class ConsoleMenu implements CommandLineRunner {
 
     private final BookRepository bookRepository;
     private final AuthorRepository authorRepository;
-    private final BookDao bookDao;
-    private final AuthorDao authorDao;
     private final LibraryService service;
     private final Scanner scanner = new Scanner(System.in);
 
-    public ConsoleMenu(BookDao bookDao, AuthorDao authorDao, LibraryService service, BookRepository bookRepository, AuthorRepository authorRepository) {
-        this.bookDao = bookDao;
-        this.authorDao = authorDao;
+    public ConsoleMenu(LibraryService service, BookRepository bookRepository, AuthorRepository authorRepository) {
         this.service = service;
         this.bookRepository = bookRepository;
         this.authorRepository = authorRepository;
