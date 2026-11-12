@@ -5,6 +5,7 @@ import io.github.xoage.library.dao.BookDao;
 import io.github.xoage.library.model.Author;
 import io.github.xoage.library.model.AuthorStats;
 import io.github.xoage.library.model.Book;
+import io.github.xoage.library.repository.AuthorRepository;
 import io.github.xoage.library.repository.BookRepository;
 import io.github.xoage.library.service.LibraryService;
 import org.springframework.boot.CommandLineRunner;
@@ -20,16 +21,18 @@ import java.util.Scanner;
 public class ConsoleMenu implements CommandLineRunner {
 
     private final BookRepository bookRepository;
+    private final AuthorRepository authorRepository;
     private final BookDao bookDao;
     private final AuthorDao authorDao;
     private final LibraryService service;
     private final Scanner scanner = new Scanner(System.in);
 
-    public ConsoleMenu(BookDao bookDao, AuthorDao authorDao, LibraryService service, BookRepository bookRepository) {
+    public ConsoleMenu(BookDao bookDao, AuthorDao authorDao, LibraryService service, BookRepository bookRepository, AuthorRepository authorRepository) {
         this.bookDao = bookDao;
         this.authorDao = authorDao;
         this.service = service;
         this.bookRepository = bookRepository;
+        this.authorRepository = authorRepository;
     }
 
     @Override
@@ -100,7 +103,7 @@ public class ConsoleMenu implements CommandLineRunner {
     }
 
     private void printAuthorStats() {
-        for (AuthorStats stats : authorDao.findAllWithBookCount()) {
+        for (AuthorStats stats : authorRepository.findAllWithBookCount()) {
             System.out.printf("%-25s книг: %d%n", stats.name(), stats.bookCount());
         }
     }
@@ -110,7 +113,7 @@ public class ConsoleMenu implements CommandLineRunner {
         String title = scanner.nextLine().trim();
 
         System.out.println("Авторы:");
-        for (Author author : authorDao.findAll()) {
+        for (Author author : authorRepository.findAll(Sort.by("name"))) {
             System.out.println("  " + author.id() + ". " + author.name());
         }
         System.out.print("Номер автора: ");
