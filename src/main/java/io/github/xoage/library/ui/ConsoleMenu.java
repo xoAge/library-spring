@@ -127,19 +127,21 @@ public class ConsoleMenu implements CommandLineRunner {
         String isbnText = scanner.nextLine().trim();
         String isbn = isbnText.isEmpty() ? null : isbnText;
 
-        int id = bookDao.add(new Book(null, title, new Author(authorId, null), year, isbn));
-        System.out.println("Книга добавлена, id = " + id);
+        Book saved = bookRepository.save(
+                new Book(null, title, authorRepository.getReferenceById(authorId), year, isbn));
+        System.out.println("Книга добавлена, id = " + saved.id());
     }
 
     private void deleteBook() {
         System.out.print("id книги для удаления: ");
         int id = Integer.parseInt(scanner.nextLine().trim());
 
-        if (bookDao.delete(id)) {
-            System.out.println("Книга удалена");
-        } else {
+        if (!bookRepository.existsById(id)) {
             System.out.println("Книги с id " + id + " нет");
+            return;
         }
+        bookRepository.deleteById(id);
+        System.out.println("Книга удалена");
     }
 
     private void updateBook() {
