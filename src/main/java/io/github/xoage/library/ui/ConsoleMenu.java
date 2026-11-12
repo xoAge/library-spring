@@ -5,9 +5,11 @@ import io.github.xoage.library.dao.BookDao;
 import io.github.xoage.library.model.Author;
 import io.github.xoage.library.model.AuthorStats;
 import io.github.xoage.library.model.Book;
+import io.github.xoage.library.repository.BookRepository;
 import io.github.xoage.library.service.LibraryService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.sql.SQLException;
@@ -17,15 +19,17 @@ import java.util.Scanner;
 @Component //Spring сам создаёт меню и запускает его после старта
 public class ConsoleMenu implements CommandLineRunner {
 
+    private final BookRepository bookRepository;
     private final BookDao bookDao;
     private final AuthorDao authorDao;
     private final LibraryService service;
     private final Scanner scanner = new Scanner(System.in);
 
-    public ConsoleMenu(BookDao bookDao, AuthorDao authorDao, LibraryService service) {
+    public ConsoleMenu(BookDao bookDao, AuthorDao authorDao, LibraryService service, BookRepository bookRepository) {
         this.bookDao = bookDao;
         this.authorDao = authorDao;
         this.service = service;
+        this.bookRepository = bookRepository;
     }
 
     @Override
@@ -46,7 +50,7 @@ public class ConsoleMenu implements CommandLineRunner {
 
             try {//try внутри while, потому что работает от try к catch, если будет снаружи: ошибка ловится снаружи, а catch уже нет.
                 switch (choice) {
-                    case "1" -> printBooks(bookDao.findAll());
+                    case "1" -> printBooks(bookRepository.findAll(Sort.by("id")));
                     case "2" -> search();
                     case "3" -> addBook();
                     case "4" -> deleteBook();
@@ -86,13 +90,13 @@ public class ConsoleMenu implements CommandLineRunner {
         System.out.print("Часть названия: ");
         String part = scanner.nextLine().trim(); //nextInt() читает число, а Enter после него оставляет во вводе.
         // Следующий nextLine() подхватывает этот пустой Enter, поэтому везде nextLine()
-        printBooks(bookDao.findByTitle(part));
+        printBooks(bookRepository.findByTitleContainingIgnoreCaseOrderById(part));
     }
 
     private void searchByAuthor() {
         System.out.print("Часть имени автора: ");
         String part = scanner.nextLine().trim();
-        printBooks(bookDao.findByAuthor(part));
+        printBooks(bookRepository.findByAuthorNameContainingIgnoreCaseOrderById(part));
     }
 
     private void printAuthorStats() {
