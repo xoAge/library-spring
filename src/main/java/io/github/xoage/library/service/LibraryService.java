@@ -20,14 +20,6 @@ public class LibraryService {
         this.authorRepository = authorRepository;
     }
 
-    /** Автор и книга сохраняются вместе: либо оба, либо ничего. */
-    @Transactional
-    public int addBookWithNewAuthor(String authorName, String title, Integer year, String isbn) {
-        Author author = authorRepository.save(new Author(null, authorName));
-        Book book = bookRepository.save(new Book(null, title, author, year, isbn));
-        return book.id();
-    }
-
     /** null в параметре - оставить поле как есть. false, если книги нет. */
     @Transactional
     public boolean updateBook(int id, String newTitle, Integer newAuthorId, Integer newYear, String newIsbn) {

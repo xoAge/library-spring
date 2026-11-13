@@ -1,10 +1,6 @@
 package io.github.xoage.library.web;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 /// То, что клиент присылает, чтобы создать книгу.
 public record BookRequest(
