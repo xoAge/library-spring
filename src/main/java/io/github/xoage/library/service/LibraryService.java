@@ -44,4 +44,11 @@ public class LibraryService {
         }
         return true;
     }
+
+    @Transactional
+    public Book addBook(String title, Integer authorId, Integer year, String isbn) {
+        Author author = authorRepository.findById(authorId)
+                .orElseThrow(() -> new NotFoundException("Автора с id " + authorId + " нет"));
+        return bookRepository.save(new Book(null, title, author, year, isbn));
+    }
 }
