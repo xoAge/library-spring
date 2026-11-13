@@ -4,6 +4,7 @@ import io.github.xoage.library.model.Book;
 import io.github.xoage.library.repository.BookRepository;
 import io.github.xoage.library.service.LibraryService;
 import io.github.xoage.library.service.NotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -47,14 +48,14 @@ public class BookController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BookResponse create(@RequestBody BookRequest request) {
+    public BookResponse create(@Valid @RequestBody BookRequest request) {
         Book book = service.addBook(request.title(), request.authorId(), request.year(), request.isbn());
         return BookResponse.from(book);
     }
 
     @PatchMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void update(@PathVariable int id, @RequestBody BookUpdateRequest request) {
+    public void update(@Valid @PathVariable int id, @RequestBody BookUpdateRequest request) {
         if (!service.updateBook(id, request.title(), request.authorId(), request.year(), request.isbn())) {
             throw new NotFoundException("Книги с id " + id + " нет");
         }
