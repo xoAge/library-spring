@@ -33,6 +33,14 @@ public class Book {
         this.isbn = isbn;
     }
 
+    public void setAuthor(Author author) {
+        this.author = author;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
+    }
+
     public void setTitle(String title) {
         this.title = title;
     }

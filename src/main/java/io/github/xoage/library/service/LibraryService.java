@@ -30,7 +30,7 @@ public class LibraryService {
 
     /** null в параметре - оставить поле как есть. false, если книги нет. */
     @Transactional
-    public boolean updateBook(int id, String newTitle, Integer newYear) {
+    public boolean updateBook(int id, String newTitle, Integer newAuthorId, Integer newYear, String newIsbn) {
         Optional<Book> found = bookRepository.findById(id);
         if (found.isEmpty()) {
             return false;
@@ -39,8 +39,16 @@ public class LibraryService {
         if (newTitle != null) {
             book.setTitle(newTitle);
         }
+        if (newAuthorId != null) {
+            Author author = authorRepository.findById(newAuthorId)
+                    .orElseThrow(() -> new NotFoundException("Автора с id " + newAuthorId + " нет"));
+            book.setAuthor(author);
+        }
         if (newYear != null) {
             book.setYear(newYear);
+        }
+        if (newIsbn != null) {
+            book.setIsbn(newIsbn);
         }
         return true;
     }
@@ -50,5 +58,13 @@ public class LibraryService {
         Author author = authorRepository.findById(authorId)
                 .orElseThrow(() -> new NotFoundException("Автора с id " + authorId + " нет"));
         return bookRepository.save(new Book(null, title, author, year, isbn));
+    }
+
+    @Transactional
+    public void deleteBook(int id) {
+        if (!bookRepository.existsById(id)) {
+            throw new NotFoundException("Книги с id " + id + " нет");
+        }
+        bookRepository.deleteById(id);
     }
 }

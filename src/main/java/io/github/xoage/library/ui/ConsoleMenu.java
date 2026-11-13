@@ -155,7 +155,7 @@ public class ConsoleMenu implements CommandLineRunner {
             return;
         }
 
-        if (service.updateBook(id, newTitle, newYear)) {
+        if (service.updateBook(id, newTitle, null, newYear, null)) {
             System.out.println("Книга изменена");
         } else {
             System.out.println("Книги с id " + id + " нет");
