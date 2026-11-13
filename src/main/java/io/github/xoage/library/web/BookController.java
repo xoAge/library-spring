@@ -7,7 +7,6 @@ import io.github.xoage.library.service.NotFoundException;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -43,8 +42,7 @@ public class BookController {
     public BookResponse findById(@PathVariable int id) {  //возьми то, что стоит на месте {id}
         return bookRepository.findById(id)
                 .map(BookResponse::from)
-                .orElseThrow(() -> new ResponseStatusException(  //Исключение, если коробка пустая, с понятным сообщением
-                        HttpStatus.NOT_FOUND, "Книги с id " + id + " нет"));
+                .orElseThrow(() -> new NotFoundException("Книги с id " + id + " нет")); //Исключение, если коробка пустая, с понятным сообщением
     }
 
     @PostMapping
