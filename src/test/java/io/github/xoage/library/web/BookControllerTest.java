@@ -12,6 +12,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -44,5 +45,26 @@ class BookControllerTest {
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].title").value("Мастер и Маргарита"))
                 .andExpect(jsonPath("$[0].author").value("Михаил Булгаков"));
+    }
+
+    @Test
+    void findById_returnsBook() throws Exception {
+        when(bookRepository.findById(1))
+                .thenReturn(Optional.of(new Book(1, "Мастер и Маргарита", author, 1967, null)));
+
+        mockMvc.perform(get("/books/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Мастер и Маргарита"))
+                .andExpect(jsonPath("$.year").value(1967));
+    }
+
+    @Test
+    void findById_returns404_whenMissing() throws Exception {
+        when(bookRepository.findById(999)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/books/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.detail").value("Книги с id 999 нет"));
     }
 }
