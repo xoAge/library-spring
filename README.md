@@ -50,8 +50,9 @@ docker compose up --build
 
 - Swagger UI: http://localhost:8080/swagger-ui.html
 - список книг: http://localhost:8080/books
-  Остановить: `Ctrl+C` или `docker compose down`. 
-- Команда `docker compose down -v` дополнительно удаляет том, то есть все данные базы.
+
+Остановить: `Ctrl+C` или `docker compose down`. 
+Команда `docker compose down -v` дополнительно удаляет том, то есть все данные базы.
 
 ## API
 
