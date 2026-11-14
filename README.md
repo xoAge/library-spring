@@ -1,4 +1,5 @@
 # Домашняя библиотека на Spring Boot
+![CI](https://github.com/xoAge/library-spring/actions/workflows/ci.yml/badge.svg)
 
 REST API для учёта домашней библиотеки: 
 книги и авторы хранятся в PostgreSQL, доступ к данным через Spring Data JPA.
