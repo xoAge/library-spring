@@ -5,11 +5,12 @@ import io.github.xoage.library.repository.BookRepository;
 import io.github.xoage.library.service.LibraryService;
 import io.github.xoage.library.service.NotFoundException;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/books")
@@ -24,19 +25,18 @@ public class BookController {
     }
 
     @GetMapping
-    public List<BookResponse> find(@RequestParam(required = false) String title,
-                                   @RequestParam(required = false) String author) {
-        List<Book> books;
+    public PagedModel<BookResponse> find(@RequestParam(required = false) String title,
+                                         @RequestParam(required = false) String author,
+                                         @PageableDefault(size = 10, sort = "id") Pageable pageable) {
+        Page<Book> books;
         if (title != null) {
-            books = bookRepository.findByTitleContainingIgnoreCaseOrderById(title);
+            books = bookRepository.findByTitleContainingIgnoreCase(title, pageable);
         } else if (author != null) {
-            books = bookRepository.findByAuthorNameContainingIgnoreCaseOrderById(author);
+            books = bookRepository.findByAuthorNameContainingIgnoreCase(author, pageable);
         } else {
-            books = bookRepository.findAll(Sort.by("id"));
+            books = bookRepository.findAll(pageable);
         }
-        return books.stream()
-                .map(BookResponse::from)
-                .toList();
+        return new PagedModel<>(books.map(BookResponse::from));
     }
 
     @GetMapping("/{id}") //шаблон: на его место подходит любое значение
