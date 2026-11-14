@@ -1,24 +1,22 @@
 package io.github.xoage.library.repository;
 
 import io.github.xoage.library.model.Book;
-import org.jspecify.annotations.NonNull;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
 
 public interface BookRepository extends JpaRepository<Book, Integer> {
 
     /// Книги вместе с авторами одним запросом, без N+1.
     @Override
     @EntityGraph(attributePaths = "author")
-    List<Book> findAll(@NonNull Sort sort);
+    Page<Book> findAll(Pageable pageable);
 
     /// Загрузка поле author вместе с книгой
     @EntityGraph(attributePaths = "author")
-    List<Book> findByTitleContainingIgnoreCaseOrderById(String part);
+    Page<Book> findByTitleContainingIgnoreCase(String part, Pageable pageable);
 
     @EntityGraph(attributePaths = "author")
-    List<Book> findByAuthorNameContainingIgnoreCaseOrderById(String part);
+    Page<Book> findByAuthorNameContainingIgnoreCase(String part, Pageable pageable);
 }
