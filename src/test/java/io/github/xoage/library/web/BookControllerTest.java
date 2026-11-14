@@ -5,10 +5,10 @@ import io.github.xoage.library.model.Book;
 import io.github.xoage.library.repository.BookRepository;
 import io.github.xoage.library.service.LibraryService;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.*;
 import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.data.domain.Sort;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -16,8 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -38,16 +37,28 @@ class BookControllerTest {
     private final Author author = new Author(1, "Михаил Булгаков");
 
     @Test
-    void find_returnsAllBooks() throws Exception {
-        when(bookRepository.findAll(any(Sort.class)))
-                .thenReturn(List.of(new Book(1, "Мастер и Маргарита", author, 1967, null)));
+    void find_returnsPageOfBooks() throws Exception {
+        Book book = new Book(1, "Мастер и Маргарита", author, 1967, null);
+        when(bookRepository.findAll(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(book), PageRequest.of(0, 10), 1));
 
         mockMvc.perform(get("/books"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].title").value("Мастер и Маргарита"))
-                .andExpect(jsonPath("$[0].author").value("Михаил Булгаков"));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Мастер и Маргарита"))
+                .andExpect(jsonPath("$.content[0].author").value("Михаил Булгаков"))
+                .andExpect(jsonPath("$.page.totalElements").value(1))
+                .andExpect(jsonPath("$.page.number").value(0));
+    }
+
+    @Test
+    void find_passesPageAndSortToRepository() throws Exception {
+        when(bookRepository.findAll(any(Pageable.class))).thenReturn(Page.empty());
+
+        mockMvc.perform(get("/books?page=1&size=5&sort=title"))
+                .andExpect(status().isOk());
+
+        verify(bookRepository).findAll(PageRequest.of(1, 5, Sort.by("title")));
     }
 
     @Test
