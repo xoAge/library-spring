@@ -3,20 +3,56 @@
 
 REST API для учёта домашней библиотеки: 
 книги и авторы хранятся в PostgreSQL, доступ к данным через Spring Data JPA.
+Приложение и база запускаются одной командой через Docker Compose, 
+каждый pull request проверяется тестами в GitHub Actions.
 
 Это переработка консольного проекта [library](https://github.com/xoAge/library) (чистый JDBC) на Spring. 
 Переход шёл в три этапа:
 
-1. Spring Boot + `JdbcTemplate`: пул соединений и Flyway настраиваются автоконфигурацией, DAO получают зависимости через конструктор.
-2. Spring Data JPA: сущности вместо ручного маппинга строк, репозитории вместо DAO, исправлена проблема N+1.
+1. Spring Boot + `JdbcTemplate`: пул соединений и Flyway настраиваются автоконфигурацией, 
+DAO получают зависимости через конструктор.
+2. Spring Data JPA: сущности вместо ручного маппинга строк, репозитории вместо DAO, 
+исправлена проблема N+1.
 3. REST API вместо консольного меню: контроллеры, DTO, единый формат ошибок, валидация запросов.
+4. Docker и Docker Compose, тесты на трёх уровнях, CI на GitHub Actions, пагинация, документация Swagger.
 
 ## Технологии
 
 - Java 21, Maven
 - Spring Boot 4: Spring Web MVC, Spring Data JPA (Hibernate), Jakarta Validation
-- PostgreSQL, HikariCP
-- Flyway - миграции схемы (Hibernate только проверяет схему: `ddl-auto=validate`)
+- PostgreSQL, HikariCP, Flyway - миграции схемы (Hibernate только проверяет схему: `ddl-auto=validate`)
+- springdoc-openapi - документация API и Swagger UI
+- JUnit 5, Mockito, MockMvc, Testcontainers
+- Docker, Docker Compose, GitHub Actions
+
+## Быстрый старт через Docker
+
+Нужен только [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+
+**1.** Создать файл `.env` с паролем базы из образца:
+
+```
+cp .env.example .env
+```
+
+(в Windows: `copy .env.example .env`), затем вписать в `.env` свой пароль.
+
+**2.** Запустить приложение и базу:
+
+```
+docker compose up --build
+```
+
+При первом запуске Flyway создаст таблицы и добавит начальные данные (7 книг 4 авторов). 
+Данные хранятся в томе Docker и сохраняются между перезапусками.
+
+**3.** Открыть:
+
+- Swagger UI: http://localhost:8080/swagger-ui.html
+- список книг: http://localhost:8080/books
+
+Остановить: `Ctrl+C` или `docker compose down`. 
+Команда `docker compose down -v` дополнительно удаляет том, то есть все данные базы.
 
 ## API
 
@@ -87,18 +123,33 @@ REST API для учёта домашней библиотеки:
 | `404` | нет книги или автора с таким id |
 | `409` | повтор ISBN или имени автора |
 
-## Запуск
+## Тесты
 
-**1. Создать пользователя и базу** (в psql или pgAdmin под администратором PostgreSQL):
-
-```sql
-CREATE USER library_app WITH PASSWORD 'ваш_пароль';
-CREATE DATABASE library_spring OWNER library_app;
+```
+./mvnw verify
 ```
 
-**2. Передать пароль через переменную окружения `DB_PASSWORD`.** 
-В репозитории пароля нет: в `application.properties` `${DB_PASSWORD}`.
+(в Windows: `.\mvnw.cmd verify`). 
+Для интеграционных тестов должен быть запущен Docker: 
+Testcontainers сам поднимает PostgreSQL в контейнере, локальная база не нужна.
 
-**3. Запустить** класс `LibrarySpringApplication` или из корня проекта:
+| Уровень | Инструменты | Что проверяется |
+|---|---|---|
+| Unit | JUnit 5, Mockito | логика `LibraryService` с моками репозиториев |
+| Веб-слой | `@WebMvcTest`, MockMvc | HTTP-коды, JSON, пагинация, валидация, ошибки |
+| Интеграционные | `@SpringBootTest`, Testcontainers | весь путь HTTP → контроллер → сервис → JPA → PostgreSQL, миграции Flyway, ограничения базы |
 
-При первом запуске Flyway создаст таблицы и добавит начальные данные (7 книг 4 авторов). 
+GitHub Actions запускает сборку и все тесты на каждый push в `main` 
+и на каждый pull request; мерж в `main` возможен только при зелёной проверке.
+
+## Запуск из IDE
+
+1. Поднять только базу: `docker compose up -d db` (она будет доступна на порту `15432`).
+2. В конфигурации запуска `LibrarySpringApplication` задать переменные окружения:
+```
+DB_PASSWORD=пароль_из_.env;SPRING_DATASOURCE_URL=jdbc:postgresql://127.0.0.1:15432/library_spring
+```
+
+3. Запустить `LibrarySpringApplication`.
+   Пароль в репозитории не хранится: в `application.properties` стоит `${DB_PASSWORD}`, 
+   файл `.env` добавлен в `.gitignore`.
