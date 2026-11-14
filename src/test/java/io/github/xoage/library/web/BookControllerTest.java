@@ -5,6 +5,7 @@ import io.github.xoage.library.model.Book;
 import io.github.xoage.library.repository.BookRepository;
 import io.github.xoage.library.service.LibraryService;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.data.domain.Sort;
@@ -15,8 +16,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -66,5 +69,35 @@ class BookControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.detail").value("Книги с id 999 нет"));
+    }
+
+    @Test
+    void create_returns201() throws Exception {
+        when(service.addBook("Новая книга", 1, 2024, null))
+                .thenReturn(new Book(10, "Новая книга", author, 2024, null));
+
+        mockMvc.perform(post("/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            { "title": "Новая книга", "authorId": 1, "year": 2024 }
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.author").value("Михаил Булгаков"));
+    }
+
+    @Test
+    void create_returns400_whenInvalid() throws Exception {
+        mockMvc.perform(post("/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            { "title": "", "year": 1000 }
+                            """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.title").value("название не должно быть пустым"))
+                .andExpect(jsonPath("$.errors.authorId").value("нужно указать id автора"))
+                .andExpect(jsonPath("$.errors.year").value("год не раньше 1450"));
+
+        verifyNoInteractions(service);
     }
 }
